@@ -241,7 +241,7 @@
         let activeTab = 'floor';
         let OFFSET = { x: 275, y: 140 };
         
-        let floorOrigin = { x: 0, y: 0 }; 
+        let floorOrigin = { x: 0.0, y: 0.0 }; 
         let wallOrigins = {}; 
         let wallOpenings = {}; 
         let viewStats = {}; 
@@ -330,19 +330,16 @@
             return { ratio, isFull: ratio > 0.49, isHalf: ratio > 0.05 && ratio <= 0.49 };
         }
 
-        /**
-         * 繪製尺寸標籤 (共用於平立面圖)
-         */
         function drawDimensionLabel(ctx, text, x, y, isWallView = false) {
             ctx.save();
-            if(isWallView) ctx.scale(1, -1); // 牆面視圖有反轉，標籤文字需要再反轉回來
+            if(isWallView) ctx.scale(1, -1); 
             const padding = 2;
             ctx.font = "bold 9px Inter, sans-serif";
             const metrics = ctx.measureText(text);
             const w = metrics.width + padding * 4;
             const h = 12;
 
-            ctx.fillStyle = "rgba(15, 23, 42, 0.85)"; // 深色背景提升對比
+            ctx.fillStyle = "rgba(15, 23, 42, 0.85)"; 
             ctx.beginPath();
             ctx.roundRect(x - w/2, (isWallView ? -y : y) - h/2, w, h, 2);
             ctx.fill();
@@ -370,7 +367,6 @@
             let stats = { full: 0, half: 0 }, count = 1;
             const startY = baseP.y - Math.ceil((baseP.y - scanMinY) / unitH) * unitH;
 
-            // 緩存當前視圖中的所有磁磚以便進行邊界標註
             let gridTiles = [];
 
             for (let y = startY; y <= scanMaxY; y += unitH) {
@@ -395,12 +391,10 @@
                 gridTiles.push(row);
             }
 
-            // 地坪邊界標註：上下左右
             gridTiles.forEach((row, rIdx) => {
                 row.forEach((tile, cIdx) => {
                     if(!tile) return;
                     
-                    // 偵測左右邊界
                     const isLeft = (cIdx === 0 || row[cIdx-1] === null);
                     const isRight = (cIdx === row.length - 1 || row[cIdx+1] === null);
                     if(isLeft || isRight) {
@@ -411,7 +405,6 @@
                         }
                     }
 
-                    // 偵測上下邊界
                     const isTop = (rIdx === 0 || gridTiles[rIdx-1][cIdx] === null);
                     const isBot = (rIdx === gridTiles.length - 1 || gridTiles[rIdx+1][cIdx] === null);
                     if(isTop || isBot) {
@@ -482,7 +475,6 @@
                 grid.push(rowTiles);
             }
 
-            // 牆面邊界標註：上下左右
             grid.forEach((row, rIdx) => {
                 row.forEach((tile, tileIdx) => {
                     if(!tile) return;
@@ -494,7 +486,6 @@
                     
                     ctx.save(); ctx.scale(1, -1); ctx.fillStyle = '#94a3b8'; ctx.font = "8px sans-serif"; ctx.fillText(count++, x + 2, -(y + th - 10)); ctx.restore();
 
-                    // 左右邊界標註
                     const isL = (tileIdx === 0 || row[tileIdx-1] === null);
                     const isR = (tileIdx === row.length - 1 || row[tileIdx+1] === null);
                     if (isL || isR) {
@@ -504,7 +495,6 @@
                         }
                     }
 
-                    // 上下邊界標註
                     const isB = (rIdx === 0 || grid[rIdx-1][tileIdx] === null);
                     const isT = (rIdx === grid.length - 1 || grid[rIdx+1][tileIdx] === null);
                     if (isB || isT) {
@@ -584,25 +574,25 @@
                 label.className = "text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded";
                 container.innerHTML = `
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-[10px] block mb-1">起磚 X (cm)</label><input type="number" value="${floorOrigin.x}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="floorOrigin.x=parseFloat(this.value)||0;updateAll()"></div>
-                        <div><label class="text-[10px] block mb-1">起磚 Y (cm)</label><input type="number" value="${floorOrigin.y}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="floorOrigin.y=parseFloat(this.value)||0;updateAll()"></div>
+                        <div><label class="text-[10px] block mb-1">起磚 X (cm)</label><input type="number" step="0.1" value="${floorOrigin.x.toFixed(1)}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="floorOrigin.x=parseFloat(this.value)||0;updateAll()"></div>
+                        <div><label class="text-[10px] block mb-1">起磚 Y (cm)</label><input type="number" step="0.1" value="${floorOrigin.y.toFixed(1)}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="floorOrigin.y=parseFloat(this.value)||0;updateAll()"></div>
                     </div>
                 `;
             } else {
                 label.innerText = `牆面 W${activeTab + 1} (X, Z)`;
                 label.className = "text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded";
-                const ori = wallOrigins[activeTab] || { x: 0, z: 0 };
+                const ori = wallOrigins[activeTab] || { x: 0.0, z: 0.0 };
                 container.innerHTML = `
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-[10px] block mb-1">水平 X (cm)</label><input type="number" value="${ori.x}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="setWallOrigin('x', this.value)"></div>
-                        <div><label class="text-[10px] block mb-1">垂直 Z (cm)</label><input type="number" value="${ori.z}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="setWallOrigin('z', this.value)"></div>
+                        <div><label class="text-[10px] block mb-1">水平 X (cm)</label><input type="number" step="0.1" value="${ori.x.toFixed(1)}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="setWallOrigin('x', this.value)"></div>
+                        <div><label class="text-[10px] block mb-1">垂直 Z (cm)</label><input type="number" step="0.1" value="${ori.z.toFixed(1)}" class="w-full border rounded p-1.5 text-xs font-bold" oninput="setWallOrigin('z', this.value)"></div>
                     </div>
                 `;
             }
         }
 
         function setWallOrigin(axis, val) {
-            if (!wallOrigins[activeTab]) wallOrigins[activeTab] = { x: 0, z: 0 };
+            if (!wallOrigins[activeTab]) wallOrigins[activeTab] = { x: 0.0, z: 0.0 };
             wallOrigins[activeTab][axis] = parseFloat(val) || 0;
             updateAll();
         }
